@@ -4,12 +4,12 @@ use std::{fs};
 
 
 #[derive()]
-struct WalkResults {
-    items: Vec<PathBuf>,
-    errs: Vec<Error>
+pub struct WalkResults {
+    pub items: Vec<PathBuf>,
+    pub errs: Vec<Error>
 }
 
-pub fn walk(p: PathBuf, d: u16) {
+pub fn walk(p: PathBuf, d: u16) -> WalkResults {
 
     let mut results = WalkResults {
         items: Vec::<PathBuf>::new(),
@@ -18,13 +18,7 @@ pub fn walk(p: PathBuf, d: u16) {
 
     gatherdirs(&mut results, p, d);
 
-    let count = results.items.len();
-
-    for item in results.items {
-        println!("{:?}", item);
-    }
-
-    println!("\n===== walk found {:?} items", count);
+    return results;
 
 }
 
@@ -61,6 +55,41 @@ fn gatherdirs(results: &mut WalkResults, p: PathBuf, depth: u16) {
             }
         }
 
+    }
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::walk;
+
+
+    #[test]
+    fn can_gather_current_dir() {
+        match std::path::Path::new(".").canonicalize() {
+            Ok(pb) => {
+                walk(pb, 1);  // 1 => only return info from curr dir; don't recurse                
+            },
+
+            Err(e) => {
+                assert_eq!(true, false, "Failed to cannonicalize curr dir: {:?}", e);
+            }
+        }
+        
+    }
+
+    #[test]
+    fn can_recurse_current_dir() {
+        match std::path::Path::new(".").canonicalize() {
+            Ok(pb) => {
+                walk(pb, u16::MAX);                
+            },
+
+            Err(e) => {
+                assert_eq!(true, false, "Failed to cannonicalize curr dir: {:?}", e);
+            }
+        }
+        
     }
 
 }

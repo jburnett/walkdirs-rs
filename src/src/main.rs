@@ -35,11 +35,6 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
 
-    // You can check the value provided by positional arguments, or option arguments
-    // if let Some(name) = cli.name.as_deref() {
-    //     println!("Value for name: {}", name);
-    // }
-
     if let Some(config_path) = cli.config.as_deref() {
         println!("Value for config: {}", config_path.display());
     }
@@ -66,12 +61,14 @@ fn main() {
                         println!("Recursively walk {:?}...", pb);
                         println!("\tas_os_str: {:?}", pb.as_os_str());
 
-                        walkdirs::walk(pb, u16::MAX);
+                        let wr = walkdirs::walk(pb, u16::MAX);
+                        dump_results(wr);
                     } else {
                         println!("Only walk {:?}...", pb);
                         println!("\tas_os_str: {:?}", pb.as_os_str());
 
-                        walkdirs::walk(pb, 1);
+                        let wr = walkdirs::walk(pb, 1);
+                        dump_results(wr);
                     }
 
                 },
@@ -84,4 +81,15 @@ fn main() {
         None => {}
     }
 
+}
+
+fn dump_results(wr: walkdirs::WalkResults) {
+    let items_found = wr.items.len();
+    let errs_found = wr.errs.len();
+
+    for item in wr.items {
+        println!("{:?}", item);
+    }
+
+    println!("\nFound {} items and encountered {} errors", items_found, errs_found);
 }
