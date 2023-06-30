@@ -58,14 +58,14 @@ fn main() {
             match p.canonicalize() {
                 Ok(pb) => {
                     if *recurse {
-                        println!("Recursively walk {:?}...", pb);
-                        println!("\tas_os_str: {:?}", pb.as_os_str());
+                        // println!("Recursively walk {:?}...", pb);
+                        // println!("\tas_os_str: {:?}", pb.as_os_str());
 
                         let wr = walkdirs::walk(pb, u16::MAX);
                         dump_results(wr);
                     } else {
-                        println!("Only walk {:?}...", pb);
-                        println!("\tas_os_str: {:?}", pb.as_os_str());
+                        // println!("Only walk {:?}...", pb);
+                        // println!("\tas_os_str: {:?}", pb.as_os_str());
 
                         let wr = walkdirs::walk(pb, 1);
                         dump_results(wr);
@@ -91,5 +91,5 @@ fn dump_results(wr: walkdirs::WalkResults) {
         println!("{:?}", item);
     }
 
-    println!("\nFound {} items and encountered {} errors", items_found, errs_found);
+    println!("\n> Found {} items and encountered {} errors <", items_found, errs_found);
 }

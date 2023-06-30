@@ -24,8 +24,6 @@ pub fn walk(p: PathBuf, d: u16) -> WalkResults {
 
 fn gatherdirs(results: &mut WalkResults, p: PathBuf, depth: u16) {
 
-    println!("gatherdirs at depth {}", depth);
-
     if depth > 0 {
 
         // Aquire the dir iterator
