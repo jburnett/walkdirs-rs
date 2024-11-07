@@ -1,95 +1,105 @@
-use std::io::{Error};
 use std::path::PathBuf;
-use std::{fs};
+use walkdir::{DirEntry, Error, WalkDir};
 
 
 #[derive()]
 pub struct WalkResults {
-    pub items: Vec<PathBuf>,
-    pub errs: Vec<Error>
+    pub items: Vec<walkdir::DirEntry>,
+    pub errs: Vec<walkdir::Error>
 }
 
-pub fn walk(p: PathBuf, d: u16) -> WalkResults {
+pub fn walkdirs(p: PathBuf, d: usize) -> WalkResults {
 
     let mut results = WalkResults {
-        items: Vec::<PathBuf>::new(),
+        items: Vec::<DirEntry>::new(),
         errs: Vec::<Error>::new(),
     };
 
     gatherdirs(&mut results, p, d);
 
     return results;
-
 }
 
-fn gatherdirs(results: &mut WalkResults, p: PathBuf, depth: u16) {
 
-    println!("gatherdirs at depth {}", depth);
-
+fn gatherdirs(results: &mut WalkResults, p: PathBuf, depth: usize) {
     if depth > 0 {
 
-        // Aquire the dir iterator
-        match fs::read_dir(p) {
-            Ok(itr) => {
-                // Walk the iterator
-                for item in itr {
-                    // add the item (or error) the results
-                    match item {
-                        Ok(de) => {
-                            results.items.push(de.path());
-                            if de.path().is_dir() {
-                                // recurse into the dir
-                                gatherdirs(results, de.path().to_path_buf(), depth - 1);
-                            }
-                        },
-                        Err(e) => {
-                            results.errs.push(e);
-                        }
-                    }
-                }
-            },
-
-            // Error acquiring the iterator; add it to the error results
-            Err(e) => {
+        let walker = WalkDir::new(p).into_iter();
+        for entry in walker.filter_entry(|e| {
+            !is_git_dir(e) 
+            && e.depth() <= depth
+            && !is_gitkeep(e)   // ignore this file in emptydir
+        } ) {
+            match entry {
+                Ok(de) => {
+                    results.items.push(de);
+                },
+                Err(e) => {
                     results.errs.push(e);
+                }
             }
         }
 
     }
-
 }
+
+
+fn is_git_dir(entry: &DirEntry) -> bool {
+    entry.file_name()
+        .to_str()
+        .map(|s| s.eq(".git"))
+        .unwrap_or(false)
+}
+// Git does not recognize truly empty dir. To force a dir to be a part of the repo, at least one file must exist.
+//  Using .gitkeep in the dir causes git to recognize the dir. This fn detects the .gitkeep file for filtering
+//  so it won't count in tallies. 
+fn is_gitkeep(entry: &DirEntry) -> bool {
+    entry.file_name()
+        .to_str()
+        .map(|s| s.eq(".gitkeep"))
+        .unwrap_or(false)
+}
+
+// fn is_hidden(entry: &DirEntry) -> bool {
+//     entry.file_name()
+//         .to_str()
+//         .map(|s| s.starts_with("."))
+//         .unwrap_or(false)
+// }
+
 
 #[cfg(test)]
 mod tests {
-    use super::walk;
+    use std::usize;
+    use rstest::*;
+
+    use super::walkdirs;
 
 
-    #[test]
-    fn can_gather_current_dir() {
-        match std::path::Path::new(".").canonicalize() {
+    #[rstest]
+    #[case("./testdata", 0, 0)] // TODO: should levels=0 be disallowed?
+    #[case("./testdata", 1, 3)] // target dir only
+    #[case("./testdata", 2, 6)] // target dir and direct children
+    // full depth beginning at target dir
+    #[case("./testdata", usize::MAX, 8)]
+    #[case("./testdata/a/aa", usize::MAX, 2)]
+    #[case("./testdata/emptydir", usize::MAX, 1)]
+    // relative pathing should be same as absolute
+    #[case("./testdata/a/", usize::MAX, 6)]
+    #[case("./testdata/a/aa/..", usize::MAX, 6)]
+    fn test_walkdirs(#[case] path: &'static str, #[case] levels: usize, #[case] expected: usize ) {
+
+        match std::path::Path::new(path).canonicalize() {
             Ok(pb) => {
-                walk(pb, 1);  // 1 => only return info from curr dir; don't recurse                
+                let res = walkdirs(pb, levels);
+                // assert_ne!(res.items.len(), 0);
+                assert_eq!(res.items.len(), expected, "Found {:?} items", res.items.len());
             },
 
             Err(e) => {
                 assert_eq!(true, false, "Failed to cannonicalize curr dir: {:?}", e);
             }
         }
-        
-    }
-
-    #[test]
-    fn can_recurse_current_dir() {
-        match std::path::Path::new(".").canonicalize() {
-            Ok(pb) => {
-                walk(pb, u16::MAX);                
-            },
-
-            Err(e) => {
-                assert_eq!(true, false, "Failed to cannonicalize curr dir: {:?}", e);
-            }
-        }
-        
     }
 
 }
