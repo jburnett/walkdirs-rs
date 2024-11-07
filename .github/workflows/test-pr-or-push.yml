@@ -12,12 +12,16 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env: 
+  CARGO_TERM_COLOR: always
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test:
     name: cargo test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --all-features
+      - uses: actions/checkout@main
+      - run: rustup update stable && rustup default stable
+      - run: cargo build --verbose
+      - run: cargo test --all-features --verbose
