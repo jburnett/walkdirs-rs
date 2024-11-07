@@ -26,7 +26,9 @@ fn gatherdirs(results: &mut WalkResults, p: PathBuf, depth: usize) {
 
         let walker = WalkDir::new(p).into_iter();
         for entry in walker.filter_entry(|e| {
-            !is_git_dir(e) && e.depth() <= depth
+            !is_git_dir(e) 
+            && e.depth() <= depth
+            && !is_gitkeep(e)   // ignore this file in emptydir
         } ) {
             match entry {
                 Ok(de) => {
@@ -48,13 +50,22 @@ fn is_git_dir(entry: &DirEntry) -> bool {
         .map(|s| s.eq(".git"))
         .unwrap_or(false)
 }
-
-fn is_hidden(entry: &DirEntry) -> bool {
+// Git does not recognize truly empty dir. To force a dir to be a part of the repo, at least one file must exist.
+//  Using .gitkeep in the dir causes git to recognize the dir. This fn detects the .gitkeep file for filtering
+//  so it won't count in tallies. 
+fn is_gitkeep(entry: &DirEntry) -> bool {
     entry.file_name()
         .to_str()
-        .map(|s| s.starts_with("."))
+        .map(|s| s.eq(".gitkeep"))
         .unwrap_or(false)
 }
+
+// fn is_hidden(entry: &DirEntry) -> bool {
+//     entry.file_name()
+//         .to_str()
+//         .map(|s| s.starts_with("."))
+//         .unwrap_or(false)
+// }
 
 
 #[cfg(test)]
