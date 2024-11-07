@@ -57,7 +57,7 @@ fn main() {
             match p.canonicalize() {
                 Ok(pb) => {
                     if *recurse {
-                        let wr = walkdirs::walkdirs(pb, u16::MAX);
+                        let wr = walkdirs::walkdirs(pb, usize::MAX);
                         dump_results(wr);
                     } else {
                         let wr = walkdirs::walkdirs(pb, 1);
@@ -82,7 +82,7 @@ fn dump_results(wr: walkdirs::WalkResults) {
     let errs_found = wr.errs.len();
 
     for item in wr.items {
-        println!("{:?}", item.path());
+        println!("{:?}", item.path().display());
     }
 
     println!("\n> Found {} items and encountered {} errors <", items_found, errs_found);

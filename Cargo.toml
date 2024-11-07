@@ -1,6 +1,6 @@
 [package]
 name = "walkdirs-rs"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3.8", features = ["derive"] }
 walkdir = "2.5.0"
+
+[dev-dependencies]
+rstest = "0.23.0"
