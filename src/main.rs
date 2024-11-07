@@ -3,11 +3,10 @@ use clap::{Parser, Subcommand};
 
 mod walkdirs;
 
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Optional name to operate on
-    // name: Option<String>,
 
     /// Sets a custom config file
     #[arg(short, long, value_name = "FILE")]
@@ -58,16 +57,10 @@ fn main() {
             match p.canonicalize() {
                 Ok(pb) => {
                     if *recurse {
-                        // println!("Recursively walk {:?}...", pb);
-                        // println!("\tas_os_str: {:?}", pb.as_os_str());
-
-                        let wr = walkdirs::walk(pb, u16::MAX);
+                        let wr = walkdirs::walkdirs(pb, u16::MAX);
                         dump_results(wr);
                     } else {
-                        // println!("Only walk {:?}...", pb);
-                        // println!("\tas_os_str: {:?}", pb.as_os_str());
-
-                        let wr = walkdirs::walk(pb, 1);
+                        let wr = walkdirs::walkdirs(pb, 1);
                         dump_results(wr);
                     }
 
@@ -83,12 +76,13 @@ fn main() {
 
 }
 
+
 fn dump_results(wr: walkdirs::WalkResults) {
     let items_found = wr.items.len();
     let errs_found = wr.errs.len();
 
     for item in wr.items {
-        println!("{:?}", item);
+        println!("{:?}", item.path());
     }
 
     println!("\n> Found {} items and encountered {} errors <", items_found, errs_found);
