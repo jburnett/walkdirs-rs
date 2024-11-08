@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
+// use walkdir::DirEntry;
+use walkdirs::WalkResults;
 
 mod walkdirs;
 
@@ -56,14 +58,15 @@ fn main() {
 
             match p.canonicalize() {
                 Ok(pb) => {
+                    let wr: WalkResults;
                     if *recurse {
-                        let wr = walkdirs::walkdirs(pb, usize::MAX);
-                        dump_results(wr);
+                        wr = walkdirs::walkdirs(pb, usize::MAX);
                     } else {
-                        let wr = walkdirs::walkdirs(pb, 1);
-                        dump_results(wr);
+                        wr = walkdirs::walkdirs(pb, 1);
+                        // dump_results(wr);
                     }
-
+                    dump_results(&wr);
+                    show_largest(&wr);
                 },
 
                 Err(e) => println!("Failed to canonicalize the path {}; {}", path, e),
@@ -77,13 +80,27 @@ fn main() {
 }
 
 
-fn dump_results(wr: walkdirs::WalkResults) {
+fn dump_results(wr: &walkdirs::WalkResults) {
     let items_found = wr.items.len();
     let errs_found = wr.errs.len();
 
-    for item in wr.items {
+    let walker = wr.items.iter();
+    for item in walker {
         println!("{:?}", item.path().display());
     }
 
     println!("\n> Found {} items and encountered {} errors <", items_found, errs_found);
+}
+
+fn show_largest(wr: &walkdirs::WalkResults) {
+    // let mut idx : usize = 0;
+    let mut largest: u64 = 0;
+
+    for item in wr.items.iter() {
+        if item.file_type().is_file() && item.metadata().unwrap().len() > largest {
+            largest = item.metadata().unwrap().len();
+        }
+    }
+
+    println!("Largest found: {:?}", largest);
 }

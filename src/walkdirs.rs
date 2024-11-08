@@ -8,6 +8,7 @@ pub struct WalkResults {
     pub errs: Vec<walkdir::Error>
 }
 
+
 pub fn walkdirs(p: PathBuf, d: usize) -> WalkResults {
 
     let mut results = WalkResults {
